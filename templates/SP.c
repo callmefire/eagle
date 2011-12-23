@@ -105,7 +105,7 @@ static void extract_data(const char *start, const char *end, char *data)
         } else if ( *p == '\t') {
             ;
         } else {
-            if ( (*p == ' ') && (*(p+1) == ' ')) {
+            if ( (*p == ' ') && ((*(p+1) == ' ') || !i)) {
                 ;
             } else {
                 data[i] = *p;
