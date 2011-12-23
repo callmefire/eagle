@@ -5,6 +5,8 @@ MAKE = make
 OBJECTS = tako.o eagle.o seed.o parser.o templates/build_in.o lib/build_in.o
 TAKO_OBJS = tako.o seed.o
 EAGLE_OBJS = eagle.o seed.o parser.o templates/build_in.o lib/build_in.o
+SUBDIRS = lib
+SUBDIRS += templates
 
 TOPDIR=$(shell pwd)
 
@@ -26,23 +28,22 @@ export CFLAGS
 all: tako eagle
 
 tako: $(TAKO_OBJS)
-	$(CC) $(CFLAGS) -o tako $(TAKO_OBJS) -lcurl -lpthread -lrt
-
-eagle: $(EAGLE_OBJS)	
-	$(CC) $(CFLAGS) -o eagle $(EAGLE_OBJS) -lcurl -lpthread -lrt
+	@$(CC) $(CFLAGS) -o tako $(TAKO_OBJS) -lcurl -lpthread -lrt
+	@echo "CC $@" 
+eagle: build $(EAGLE_OBJS)	
+	@$(CC) $(CFLAGS) -o eagle $(EAGLE_OBJS) -lcurl -lpthread -lrt
+	@echo "CC $@" 
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<  
+	@$(CC) $(CFLAGS) -c $<  
+	@echo "CC $@" 
 
-templates/build_in.o:
-	$(MAKE) -C templates
-
-lib/build_in.o:
-	$(MAKE) -C lib
+.PHONY: build
+build:
+	@$(foreach dir,$(SUBDIRS),$(MAKE) -s -C $(dir);)
 
 clean:
 	@rm -f *~
 	@rm -f *.o
 	@rm -f tako eagle
-	@$(MAKE) clean -C templates
-	@$(MAKE) clean -C lib 
+	@$(foreach dir,$(SUBDIRS),$(MAKE) clean -s -C $(dir);)

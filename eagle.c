@@ -9,6 +9,9 @@ eagle_t *eagles;
 int eagle_num = 1;
 char *output_dir = NULL;
 
+unsigned long eagle_ticks = 0;
+unsigned long start_tick = 0;
+
 #define EAGLE_USER_AGENT  "Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/8.0"
 
 #define EAGLE_EYE_INVAL   10
@@ -52,6 +55,7 @@ static void timer(int signo)
         seed_enqueue_sem((seed_q_t *)&seed_q,seed,&seed_q.sem);
     }
 
+    eagle_ticks++;
 	alarm(EAGLE_EYE_INVAL);
     return;
 }
@@ -109,6 +113,16 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
     return (buf == MAP_FAILED)? NULL: buf;
 }
 
+int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,double ulnow)
+{
+    if ( (eagle_ticks - start_tick) > 5) {
+        debug(0,"downloading stopped at %f bytes. reset it\n",dlnow);
+        return 1;
+    }
+
+    return 0;
+}
+
 int watcher(int id)
 {
     CURL *curl_handle;
@@ -120,7 +134,8 @@ int watcher(int id)
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
         
-    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+    curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
+    curl_easy_setopt(curl_handle, CURLOPT_PROGRESSFUNCTION, progress_callback);
     
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, eagle_write_data);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, EAGLE_USER_AGENT);
@@ -138,6 +153,7 @@ int watcher(int id)
         curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, eagle->hfp);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA,   eagle->bfp);
 
+        start_tick = eagle_ticks;
         if (curl_easy_perform(curl_handle)) {
             printf("get url failed (%s)\n",seed->url);
         } else {
@@ -146,7 +162,7 @@ int watcher(int id)
             if (!buf) {
                 perror("mmap failed");
             } else {
-                debug(1,"cache[%d]: size %d, strlen %d\n",id,len,strlen(buf));
+                debug(1,"cache[%d]: size %d\n",id,len);
                 parser(buf, len, seed);
            
                 munmap(buf,len); 

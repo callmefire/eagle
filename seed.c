@@ -46,7 +46,7 @@ void seed_enqueue(seed_q_t *queue, seed_t *seed)
     pthread_mutex_lock(&queue->q_mutex);
     list_add_tail(&seed->list, &queue->head);     
     pthread_mutex_unlock(&queue->q_mutex);
-    debug(1,"enqueue %s\n",seed->url);
+    debug(8,"enqueue %s\n",seed->url);
 }
 
 seed_t *seed_dequeue(seed_q_t *queue)
@@ -57,7 +57,7 @@ seed_t *seed_dequeue(seed_q_t *queue)
     s = list_empty(&queue->head)?NULL:get_entry(seed_t,list,queue->head.next); 
     if (s) {
         list_del_init(&s->list); 
-        debug(1,"dequeue %s\n",s->url);
+        debug(8,"dequeue %s\n",s->url);
     }
     pthread_mutex_unlock(&queue->q_mutex);
 
@@ -70,7 +70,7 @@ void seed_enqueue_sem(seed_q_t *queue, seed_t *seed, sem_t *sem)
     list_add_tail(&seed->list, &queue->head);     
     pthread_mutex_unlock(&queue->q_mutex);
     
-    debug(1,"enqueue %s\n",seed->url);
+    debug(8,"enqueue %s\n",seed->url);
     sem_post(sem);
 }
 
@@ -85,7 +85,7 @@ seed_t *seed_dequeue_sem(seed_q_t *queue, sem_t *sem)
     list_del_init(&s->list); 
     pthread_mutex_unlock(&queue->q_mutex);
     
-    debug(1,"dequeue %s\n",s->url);
+    debug(8,"dequeue %s\n",s->url);
 
     return s;
 }
@@ -187,7 +187,7 @@ repeat:
             if (!memcmp(start,"<seed>",6)) {
                 start += 6;
                 seed_node_push(&stack,STM_GET_SEED,start);
-                debug(1,"push <seed>\n");
+                debug(8,"push <seed>\n");
                 if (!(seed = seed_alloc())) {
                     perror("Seed alloc failed");
                     exit(1);
@@ -195,29 +195,29 @@ repeat:
             } else if (!memcmp(start,"<url>",5)) {
                 start += 5;
                 seed_node_push(&stack,STM_GET_URL,start);
-                debug(1,"push <url>\n");
+                debug(8,"push <url>\n");
             } else if (!memcmp(start,"<filter>",8)) {
                 start += 8;
                 seed_node_push(&stack,STM_GET_FILTER,start);
-                debug(1,"push <filter>\n");
+                debug(8,"push <filter>\n");
             } else if (!memcmp(start,"<template>",10)) {
                 start += 10;
                 seed_node_push(&stack,STM_GET_TEMPLATE,start);
-                debug(1,"push <template>\n");
+                debug(8,"push <template>\n");
             } else {
                 start++; 
             }
         } else {
             if (!memcmp(start,"</seed>",7)) {
                 node = seed_node_pop(&stack);
-                debug(1,"pop <seed>\n");
+                debug(8,"pop <seed>\n");
                 seed_enqueue_sem((seed_q_t *)&seed_q,seed,&seed_q.sem);
                 seed = NULL;
                 start += 7;
             } else if (!memcmp(start,"</url>",6)) {
                 int len;
                 node = seed_node_pop(&stack);
-                debug(1,"pop <url>\n");
+                debug(8,"pop <url>\n");
                 len = start - node->pos;
                 seed->url = malloc(len);
                 if (!seed->url) {
@@ -229,7 +229,7 @@ repeat:
             } else if (!memcmp(start,"</filter>",9)) {
                 int len;
                 node = seed_node_pop(&stack);
-                debug(1,"pop <filter>\n");
+                debug(8,"pop <filter>\n");
                 len = start - node->pos;
                 seed->filter = malloc(len);
                 memcpy(seed->filter,node->pos,len);
@@ -237,7 +237,7 @@ repeat:
             } else if (!memcmp(start,"</template>",11)) {
                 int len;
                 node = seed_node_pop(&stack);
-                debug(1,"pop <template>\n");
+                debug(8,"pop <template>\n");
                 len = start - node->pos;
                 seed->template= malloc(len);
                 memcpy(seed->template,node->pos,len);

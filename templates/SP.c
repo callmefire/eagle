@@ -83,7 +83,7 @@ int get_entry_num(char *start, char *end)
         ret++;
    }
    
-   debug(1,"enter %s: start 0x%p, end 0x%p, num %d\n",__FUNCTION__,start,end,ret);
+   debug(1,"enter %s: start %p, end %p, num %d\n",__FUNCTION__,start,end,ret-1);
    
    return (ret - 1);
 }
@@ -93,7 +93,7 @@ static void extract_data(const char *start, const char *end, char *data)
     int i = 0;
     char *p = (char *)start;
     
-    debug(1,"enter %s\n",__FUNCTION__);
+    debug(8,"enter %s\n",__FUNCTION__);
     
     while (p < end) {
         if ( *p == '<') {
@@ -129,41 +129,56 @@ char *get_sp_entry(char *start, SP_entry_t *entry)
     char *td_start;
     char *td_end;
 
+    if (!start || !entry)
+        return NULL;
+
     tr_start = strstr(start,"<tr>");
     tr_end   = strstr(start,"</tr>");
     td_end   = tr_start + 4;
 
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
     extract_data(td_start, td_end, entry->entity);
     
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
     extract_data(td_start, td_end, entry->date);
     
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
     extract_data(td_start, td_end, entry->to);
      
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
     extract_data(td_start, td_end, entry->from);
      
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
     extract_data(td_start, td_end, entry->action);
      
     td_start = strstr(td_end,"<td");
+    if ( !td_start || (td_start > tr_end))
+        return NULL;
     td_start = strstr(td_start,">");
     td_start++;
     td_end = strstr(td_start,"</td>");
@@ -181,7 +196,7 @@ void *SP_parser(const char *buf, int len, void *tp)
     TP_header_t *hdr = NULL;
     SP_entry_t *entry = NULL;
     
-    debug(1,"enter %s\n",__FUNCTION__);
+    debug(8,"enter %s\n",__FUNCTION__);
     
     tbody_start = get_tbody_start(buf,len);
     if (!tbody_start) {
@@ -215,6 +230,8 @@ void *SP_parser(const char *buf, int len, void *tp)
     p = tbody_start;
     for (i=0; i<num; i++) {
         p = get_sp_entry(p, &entry[i]);
+        if (!p)
+            break;
     }
     
     return hdr;
@@ -227,7 +244,6 @@ void *SP_filter(void *data, void *tp) {
     SP_entry_t *np;
     SP_entry_t *op;
     int i,j,match;
-    int r1,r2,r3,r4,r5,r6;
     
     if (!data)
         return NULL;
@@ -247,14 +263,12 @@ void *SP_filter(void *data, void *tp) {
         match = 0;
         
         for (j=0; j<old->number; j++) {
-#if 1
-            if ( !(r1 = memcmp(np->entity, op->entity, strlen(np->entity))) &&
-                 !(r2 = memcmp(np->date,   op->date,   strlen(np->date)))   &&
-                 !(r3 = memcmp(np->to,     op->to,     strlen(np->to)))     &&
-                 !(r4 = memcmp(np->from,   op->from,   strlen(np->from)))   &&
-                 !(r5 = memcmp(np->action, op->action, strlen(np->action))) &&
-                 !(r6 = memcmp(np->type,   op->type,   strlen(np->type))) ) {
-#endif
+            if ( !memcmp(np->entity, op->entity, strlen(np->entity)) &&
+                 !memcmp(np->date,   op->date,   strlen(np->date))   &&
+                 !memcmp(np->to,     op->to,     strlen(np->to))     &&
+                 !memcmp(np->from,   op->from,   strlen(np->from))   &&
+                 !memcmp(np->action, op->action, strlen(np->action)) &&
+                 !memcmp(np->type,   op->type,   strlen(np->type)) ) {
                 match = 1;
                 break;
             }
@@ -264,7 +278,6 @@ void *SP_filter(void *data, void *tp) {
         
         if (!match && strstr(np->action,"Revised") && strstr(np->type,"Foreign")) {
             np->flag |= SP_ENTRY_NEW;
-            printf("%d,%d,%d,%d,%d,%d\n",r1,r2,r3,r4,r5,r6);
         }
         np++;
     }
@@ -280,16 +293,24 @@ void SP_notifier(void *data)
     TP_header_t *hdr;
     SP_entry_t *ep;
     int i, num = 0;
-    char buf[2048];
-    char *p = buf;
+    char *buf;
+    char *p;
     
     if (!data)
         return;
    
-    debug(1,"enter %s: data %p\n",__FUNCTION__,data);
+    debug(8,"enter %s: data %p\n",__FUNCTION__,data);
 
     hdr = (TP_header_t *)data;
     ep = (SP_entry_t *)hdr->data;
+
+    buf = (char *)calloc(1, hdr->number * (sizeof(SP_entry_t) + 32));
+    if (!buf) {
+        perror("No mem to alloc buf for notifier");
+        return;
+    }
+
+    p = buf;
 
     for (i=0; i<hdr->number; i++) {
         if (!(ep[i].flag & SP_ENTRY_NEW)) 
@@ -303,7 +324,8 @@ void SP_notifier(void *data)
 
     if (p != buf)
         tp_send_mail(buf); 
-    
+   
+    free(buf);
     return;
 }
 
