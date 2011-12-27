@@ -94,12 +94,12 @@ static size_t eagle_write_data(void *ptr, size_t size, size_t nmemb, void *fp)
   return written;
 }
 
-static int get_cache_size(int fd)
+static int get_file_size(int fd)
 {
-    struct stat buf;
-    fstat(fd,&buf);
+    struct stat fs;
+    fstat(fd,&fs);
 
-    return buf.st_size;
+    return fs.st_size;
 }
 
 static char *eagle_cache_map(eagle_t *eagle, int *len)
@@ -107,7 +107,7 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
     int fd = fileno(eagle->bfp);
     char *buf;
 
-    *len = get_cache_size(fd);
+    *len = get_file_size(fd);
     buf = mmap(NULL,*len, PROT_READ,MAP_PRIVATE,fd,0);
 
     return (buf == MAP_FAILED)? NULL: buf;
@@ -116,7 +116,7 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
 int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,double ulnow)
 {
     if ( (eagle_ticks - start_tick) > 5) {
-        debug(0,"downloading stopped at %f bytes. reset it\n",dlnow);
+        debug(1,"downloading stopped at %f bytes. reset it\n",dlnow);
         return 1;
     }
 
@@ -155,7 +155,7 @@ int watcher(int id)
 
         start_tick = eagle_ticks;
         if (curl_easy_perform(curl_handle)) {
-            printf("get url failed (%s)\n",seed->url);
+            debug(1,"get url failed (%s)\n",seed->url);
         } else {
         
             buf = eagle_cache_map(eagle, &len);

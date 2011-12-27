@@ -3,6 +3,9 @@
 #include "hash.h"
 #include "debug.h"
 
+#include <sys/mman.h>
+#include <regex.h>
+
 seed_job_q seed_q;
 seed_hash_q *seed_base;
 seed_ring_q seed_ring;
@@ -124,7 +127,7 @@ void seed_free(seed_t *seed)
 
 struct seed_stack_node {
     int state;
-    char *pos;
+    int pos;
 };
 
 struct seed_stack {
@@ -132,7 +135,7 @@ struct seed_stack {
     int top;
 };
 
-static void seed_node_push(struct seed_stack *stack, int state, char *pos)
+static void seed_node_push(struct seed_stack *stack, int state, int pos)
 {
     stack->top++;
     stack->stack[stack->top].state = state;   
@@ -161,101 +164,110 @@ static int is_stack_empty(struct seed_stack *stack) {
 }
 #endif
 
-static void seed_parse(FILE *fp)
+static void seed_parse(const char *buf, unsigned int len)
 {
-    char buf[2048];
     char *start;
-    int line = 1;
+    char *end;
+    char *p;
     struct seed_stack stack;
     struct seed_stack_node *node = NULL;
     seed_t *seed = NULL;
+    
+    regex_t preg;
+    regmatch_t pmatch;
+    char *regex = "<\\(/\\)\\?\\w\\+\\?>"; /* <xxx> or </xxx> */
+    int ret,key_len,diff;
+
+    if (regcomp(&preg,regex,0)) {
+        perror("Regex compile error\n");
+        exit(1);
+    }
+
     seed_stack_init(&stack);
 
-    while (fgets(buf,sizeof(buf),fp)) {
-        if (buf[0] == 0) {
-            line++;
-            continue;
+    start = (char *)buf;
+    end = (char *)(buf + len);
+
+    p = start;
+
+    while (p <= end) {
+
+        if ( (ret = regexec(&preg,p,1,&pmatch, 0))) {
+            break;
         }
-        start = buf;
-repeat:
-        if (!(start=strstr(start,"<"))) {
-            line++;
-            continue;
-        }
-       
-        if (*(start+1) != '/') {
-            if (!memcmp(start,"<seed>",6)) {
-                start += 6;
-                seed_node_push(&stack,STM_GET_SEED,start);
+        
+        diff = (int)(p - start);
+        key_len = pmatch.rm_eo - pmatch.rm_so - 2;  /* <,> */
+        p = &p[pmatch.rm_so+1];
+
+        if ( *p != '/') {
+            if (!memcmp(p,"seed",key_len)) {
+                seed_node_push(&stack,STM_GET_SEED,pmatch.rm_eo + diff);
                 debug(8,"push <seed>\n");
                 if (!(seed = seed_alloc())) {
                     perror("Seed alloc failed");
                     exit(1);
                 }
-            } else if (!memcmp(start,"<url>",5)) {
-                start += 5;
-                seed_node_push(&stack,STM_GET_URL,start);
+            } else if (!memcmp(p,"url",key_len)) {
+                seed_node_push(&stack,STM_GET_URL,pmatch.rm_eo + diff);
                 debug(8,"push <url>\n");
-            } else if (!memcmp(start,"<filter>",8)) {
-                start += 8;
-                seed_node_push(&stack,STM_GET_FILTER,start);
-                debug(8,"push <filter>\n");
-            } else if (!memcmp(start,"<template>",10)) {
-                start += 10;
-                seed_node_push(&stack,STM_GET_TEMPLATE,start);
+            } else if (!memcmp(p,"template",key_len)) {
+                seed_node_push(&stack,STM_GET_TEMPLATE,pmatch.rm_eo + diff);
                 debug(8,"push <template>\n");
             } else {
-                start++; 
+                ; 
             }
         } else {
-            if (!memcmp(start,"</seed>",7)) {
+            p++;
+            key_len--;
+            
+            if (!memcmp(p,"seed",key_len)) {
                 node = seed_node_pop(&stack);
                 debug(8,"pop <seed>\n");
                 seed_enqueue_sem((seed_q_t *)&seed_q,seed,&seed_q.sem);
                 seed = NULL;
-                start += 7;
-            } else if (!memcmp(start,"</url>",6)) {
+            } else if (!memcmp(p,"url",key_len)) {
                 int len;
                 node = seed_node_pop(&stack);
                 debug(8,"pop <url>\n");
-                len = start - node->pos;
-                seed->url = malloc(len);
+                len = pmatch.rm_so + diff - node->pos + 1;
+                seed->url = calloc(1,len);
                 if (!seed->url) {
                     debug(1,"URL alloc failed: %d\n",len);
                     exit(1);
                 }
-                memcpy(seed->url,node->pos,len);
-                start += 6;
-            } else if (!memcmp(start,"</filter>",9)) {
-                int len;
-                node = seed_node_pop(&stack);
-                debug(8,"pop <filter>\n");
-                len = start - node->pos;
-                seed->filter = malloc(len);
-                memcpy(seed->filter,node->pos,len);
-                start += 9;
-            } else if (!memcmp(start,"</template>",11)) {
+                memcpy(seed->url,&start[node->pos],len - 1);
+            } else if (!memcmp(p,"template",key_len)) {
                 int len;
                 node = seed_node_pop(&stack);
                 debug(8,"pop <template>\n");
-                len = start - node->pos;
-                seed->template= malloc(len);
-                memcpy(seed->template,node->pos,len);
-                start += 11;
+                len = pmatch.rm_so + diff - node->pos + 1;
+                seed->template = calloc(1,len);
+                if (!seed->template) {
+                    debug(1,"template alloc failed: %d\n",len);
+                    exit(1);
+                }
+                memcpy(seed->template,&start[node->pos],len - 1);
             } else {
-                start += 2;
+                ;
             }
-
         }
-
-        goto repeat; 
-    }    
+        p = &start[pmatch.rm_eo+diff];
+    }
 }
 
 static void queue_init(seed_q_t *q)
 {
     INIT_LIST_HEAD(&q->head);
 	pthread_mutex_init(&q->q_mutex,NULL);
+}
+
+static int get_file_size(int fd)
+{
+    struct stat fs;
+    fstat(fd,&fs);
+
+    return fs.st_size;
 }
 
 void seeds_init(void)
@@ -283,14 +295,24 @@ void seeds_init(void)
 void seeds_file_init(const char *name)        
 {
     FILE *fp;
+    char *buf;
+    unsigned int len;
 
     fp = fopen(name,"r");
     if (!fp) {
         perror("Seed file not found");
         return;
     }
+
+    len = get_file_size(fileno(fp));
     
-    seed_parse(fp);
+    buf = mmap(NULL,len, PROT_READ,MAP_PRIVATE,fileno(fp),0); 
+    if (!buf) {
+        perror("Seed file map failed");
+        return;
+    }
+
+    seed_parse(buf,len);
     fclose(fp);
 }
 
