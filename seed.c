@@ -9,10 +9,11 @@
 seed_job_q seed_q;
 seed_hash_q *seed_base;
 seed_ring_q seed_ring;
+unsigned int seed_hash_size;
         
 unsigned int seed_hash(const char *str)
 {
-    return strhash(str) % SEED_HASH;
+    return strhash(str) % seed_hash_size;
 }
 
 seed_t *seed_match(const char *url)
@@ -270,7 +271,7 @@ static int get_file_size(int fd)
     return fs.st_size;
 }
 
-void seeds_init(void)
+void seeds_init(unsigned int size)
 { 
     int i;
 
@@ -278,14 +279,16 @@ void seeds_init(void)
     queue_init((seed_q_t *)&seed_q);   
     sem_init(&seed_q.sem,0,0);
 
+    seed_hash_size = size;
+
     /* Init hash */
-    seed_base = calloc(SEED_HASH,sizeof(seed_hash_q));
+    seed_base = calloc(seed_hash_size,sizeof(seed_hash_q));
     if (!seed_base) {
         perror("seed hash alloc failed\n");
         exit(1);
     }
 
-    for (i=0; i<SEED_HASH; i++) {
+    for (i=0; i<seed_hash_size; i++) {
         queue_init((seed_q_t *)&seed_base[i]);
     }
 

@@ -39,10 +39,7 @@ extern seed_job_q seed_q;
 extern seed_hash_q *seed_base;
 extern seed_ring_q seed_ring;
 
-#define SEED_HASH   65536UL
-//extern seed
-
-extern void seeds_init(void);
+extern void seeds_init(unsigned int);
 extern void seeds_file_init(const char *);
 
 extern void seed_enqueue(seed_q_t *,seed_t *);

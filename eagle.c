@@ -257,7 +257,7 @@ int main(int argc,char **argv)
 	}
 
     eagles_init();
-    seeds_init();
+    seeds_init(0);
     seeds_file_init(seedname);
     parser_init();
 	

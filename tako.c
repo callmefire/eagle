@@ -203,7 +203,7 @@ int main(int argc,char **argv)
 	}
 
     takos_init();
-    seeds_init();
+    seeds_init(65535);
     seeds_file_init(seedname);
 	
     /* setup signal handler */
