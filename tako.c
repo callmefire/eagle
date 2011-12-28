@@ -46,14 +46,14 @@ static void tako_cache_init(int id)
 {
     char name[64];
 
-    sprintf(name,"%s/header%d",output_dir,id);
+    sprintf(name,"%s/theader%d",output_dir,id);
 
     if ( !(takos[id].hfp = fopen(name,"w+"))) {
         perror("create header file failed");
         exit(1);
     }    
     
-    sprintf(name,"%s/body%d",output_dir,id);
+    sprintf(name,"%s/tbody%d",output_dir,id);
     
     if ( !(takos[id].bfp = fopen(name,"w+"))) {
         perror("create header file failed");

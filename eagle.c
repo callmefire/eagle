@@ -64,14 +64,14 @@ static void eagle_cache_init(int id)
 {
     char name[64];
 
-    sprintf(name,"%s/header%d",output_dir,id);
+    sprintf(name,"%s/eheader%d",output_dir,id);
 
     if ( !(eagles[id].hfp = fopen(name,"w+"))) {
         perror("create header file failed");
         exit(1);
     }    
     
-    sprintf(name,"%s/body%d",output_dir,id);
+    sprintf(name,"%s/ebody%d",output_dir,id);
     
     if ( !(eagles[id].bfp = fopen(name,"w+"))) {
         perror("create header file failed");
