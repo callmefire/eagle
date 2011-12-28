@@ -255,6 +255,8 @@ static void seed_parse(const char *buf, unsigned int len)
         }
         p = &start[pmatch.rm_eo+diff];
     }
+
+    regfree(&preg);
 }
 
 static void queue_init(seed_q_t *q)
