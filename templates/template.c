@@ -7,7 +7,7 @@ extern int SP_init(void);
 
 void tp_send_mail(char *body)
 {
-    char to[64] = "dchang@juniper.net,callmefire@139.com";
+    char to[64] = "dchang@juniper.net,callmefire@139.com,callmefire@gmail.com";
     char from[64] = "\"Eagle\"<eagle@callmefire.com>";
     char draftname[64];
     char domain[16] = "jnpr";

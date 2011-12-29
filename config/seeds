@@ -1,4 +1,9 @@
 <seed>
-<url>http://www.standardandpoors.com/ratings/ratings-actions/en/ap?tabRAL=RA&sectorPR=all&sectorRA=sovereigns&radioRA=1&alphaRA=ALL&sectorNR=all&radioNR=-1&alphaNR=ALL&startPRPrev=0&rangePRPrev=50&startNRPrev=0&rangeNRPrev=50&country=all&jpSectorPR=&jpSectorRA=all&jpSectorNR=</url>
+<url>http://www.standardandpoors.com/ratings/ratings-actions/en/ap?tabRAL=RA&sectorPR=all&sectorRA=sovereigns&radioRA=1&alphaRA=ALL&sectorNR=all&radioNR=-1&alphaNR=ALL&startPRPrev=0&rangePRPrev=50&startNRPrev=0&rangeNRPrev=50&country=all&jpSectorPR=&jpSectorRA=all&jpSectorNR=
+</url>
 <template>SP</template>
+</seed>
+<seed>
+<url>http://hq.sinajs.cn/list=USDJPY,USDCHF,GBPUSD,EURUSD,USDHKD,AUDUSD,USDCAD,USDCNY</url>
+<template>SINAFX</template>
 </seed>

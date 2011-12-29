@@ -237,13 +237,27 @@ void *SP_parser(const char *buf, int len, void *tp)
     return hdr;
 }
 
+void dump_entry(TP_header_t *hdr)
+{
+    SP_entry_t *ep;
+    int i;
+
+    if (!hdr)
+        return;
+
+    ep = (SP_entry_t *)hdr->data;
+    for (i=0; i<hdr->number; i++) {
+        printf("<%d>: %s,%s,%s->%s,%s,%s\n",i,ep[i].entity,ep[i].date,ep[i].from,ep[i].to,ep[i].action,ep[i].type);    
+    }
+}
+
 void *SP_filter(void *data, void *tp) {
     template_t *temp = (template_t *)tp;
     TP_header_t *old;
     TP_header_t *new;
     SP_entry_t *np;
     SP_entry_t *op;
-    int i,j,match;
+    int i,j,match,debug = 0;
     
     if (!data)
         return NULL;
@@ -278,8 +292,14 @@ void *SP_filter(void *data, void *tp) {
         
         if (!match && strstr(np->action,"Revised") && strstr(np->type,"Foreign")) {
             np->flag |= SP_ENTRY_NEW;
+            debug = 1;
         }
         np++;
+    }
+
+    if (debug) {
+        dump_entry(old);
+        dump_entry(new);
     }
 
     free(temp->private);
