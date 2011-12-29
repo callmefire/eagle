@@ -35,7 +35,7 @@ template_t *get_template_by_name(const char *name)
    return NULL; 
 }
 
-void parser(const char *buf, int len, void *s)
+void parse(const char *buf, int len, void *s)
 {
     template_t *temp;
     seed_t *seed = (seed_t *)s;

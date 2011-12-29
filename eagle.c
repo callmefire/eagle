@@ -167,7 +167,7 @@ int watcher(int id)
             } else {
                 debug(1,"cache[%d]: size %d\n",id,len);
                 
-                parser(buf, len, seed);
+                parse(buf, len, seed);
                 munmap(buf,len); 
             }
         } 

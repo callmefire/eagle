@@ -6,7 +6,7 @@
 #include "template.h"
 #include "debug.h"
 
-static template_t *SP_temp = NULL;
+static template_t *template = NULL;
 
 typedef struct SP_entry {
     char entity[128];
@@ -37,7 +37,7 @@ typedef struct SP_entry {
 #define TBODYSTART   "<tbody>"
 #define TBODYEND     "</tbody>"
 
-char *get_tbody_start(const char *buf, int len)
+static char *get_tbody_start(const char *buf, int len)
 {
     char *p;
     
@@ -62,7 +62,7 @@ char *get_tbody_start(const char *buf, int len)
     return p;
 }
 
-char *get_tbody_end(char *start)
+static char *get_tbody_end(char *start)
 {
     char *p = NULL;
 
@@ -71,7 +71,7 @@ char *get_tbody_end(char *start)
     return p;
 }
 
-int get_entry_num(char *start, char *end)
+static int get_entry_num(char *start, char *end)
 {
     char *p = start;
     char *q;
@@ -121,7 +121,7 @@ static void extract_data(const char *start, const char *end, char *data)
     return;
 }
 
-char *get_sp_entry(char *start, SP_entry_t *entry)
+static char *get_sp_entry(char *start, SP_entry_t *entry)
 {
     char *tr_start;
     char *tr_end;
@@ -186,7 +186,7 @@ char *get_sp_entry(char *start, SP_entry_t *entry)
     return tr_end+5;
 }
 
-void *SP_parser(const char *buf, int len, void *seed)
+static void *parser(const char *buf, int len, void *seed)
 {   
     char *tbody_start;
     char *tbody_end;
@@ -236,7 +236,7 @@ void *SP_parser(const char *buf, int len, void *seed)
     return hdr;
 }
 
-void dump_entry(TP_header_t *hdr)
+static void dump_entry(TP_header_t *hdr)
 {
     SP_entry_t *ep;
     int i;
@@ -250,7 +250,7 @@ void dump_entry(TP_header_t *hdr)
     }
 }
 
-void *SP_filter(void *data, void *s) {
+static void *filter(void *data, void *s) {
     seed_t *seed = s;
     TP_header_t *old;
     TP_header_t *new;
@@ -307,7 +307,7 @@ void *SP_filter(void *data, void *s) {
     return data;
 }
 
-void SP_notifier(void *data)
+static void notifier(void *data)
 {
     TP_header_t *hdr;
     SP_entry_t *ep;
@@ -350,21 +350,21 @@ void SP_notifier(void *data)
 
 int SP_init(void)
 {
-    SP_temp = calloc(1,sizeof(template_t));
+    template = calloc(1,sizeof(template_t));
 
-    if (!SP_temp) {
+    if (!template) {
         perror("Alloc SP template failed");
         return -1;
     }
     
-    INIT_LIST_HEAD(&SP_temp->list);
+    INIT_LIST_HEAD(&template->list);
 
-    SP_temp->name[0] = 'S';
-    SP_temp->name[1] = 'P';
-    SP_temp->parser = SP_parser;
-    SP_temp->filter = SP_filter;
-    SP_temp->notifier = SP_notifier;
+    template->name[0] = 'S';
+    template->name[1] = 'P';
+    template->parser = parser;
+    template->filter = filter;
+    template->notifier = notifier;
 
-    register_template(SP_temp);
+    register_template(template);
     return 0;
 }
