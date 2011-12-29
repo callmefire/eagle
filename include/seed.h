@@ -9,9 +9,9 @@ typedef struct seed {
     struct list_head list;
     char *url;
     int flags;
-    char *filter;
     char *template;
     template_t *temp;
+    void *private;
 } seed_t;
 
 typedef struct seed_q {
@@ -40,7 +40,7 @@ extern seed_hash_q *seed_base;
 extern seed_ring_q seed_ring;
 
 extern void seeds_init(unsigned int);
-extern void seeds_file_init(const char *);
+extern void seeds_cfg_init(const char *);
 
 extern void seed_enqueue(seed_q_t *,seed_t *);
 extern seed_t *seed_dequeue(seed_q_t *);

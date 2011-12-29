@@ -112,11 +112,11 @@ void seed_free(seed_t *seed)
     if (seed->url)
         free(seed->url);
     
-    if (seed->filter)
-        free(seed->filter);
-    
     if (seed->template)
         free(seed->template);
+
+    if (seed->private)
+        free(seed->private);
 
     free(seed);
 }
@@ -297,7 +297,7 @@ void seeds_init(unsigned int size)
     queue_init((seed_q_t *)&seed_ring);
 }
 
-void seeds_file_init(const char *name)        
+void seeds_cfg_init(const char *name)        
 {
     FILE *fp;
     char *buf;

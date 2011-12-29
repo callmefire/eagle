@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #ifdef DEBUG
-#define default_debug_level  0
+#define default_debug_level  8
 #define debug(level,fmt,args...) ({                          		\
 	if ( level <= default_debug_level)                   		\
 		printf("%s(%d):"fmt,__FUNCTION__,__LINE__,##args);      \

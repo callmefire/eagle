@@ -2,7 +2,7 @@
 
 #include "eagle.h"
 #include "seed.h"
-#include "parser.h"
+#include "template.h"
 #include "debug.h"
 
 eagle_t *eagles;
@@ -76,7 +76,7 @@ static void eagle_cache_init(int id)
     if ( !(eagles[id].bfp = fopen(name,"w+"))) {
         perror("create header file failed");
         exit(1);
-    }    
+    }
 } 
 
 static void eagle_cache_fini(int id)
@@ -91,6 +91,7 @@ static void eagle_cache_fini(int id)
 static size_t eagle_write_data(void *ptr, size_t size, size_t nmemb, void *fp)
 {
   int written = fwrite(ptr, size, nmemb, (FILE *)fp);
+
   return written;
 }
 
@@ -106,6 +107,8 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
 {
     int fd = fileno(eagle->bfp);
     char *buf;
+
+    fflush(eagle->bfp);
 
     *len = get_file_size(fd);
     buf = mmap(NULL,*len, PROT_READ,MAP_PRIVATE,fd,0);
@@ -150,7 +153,7 @@ int watcher(int id)
         curl_easy_setopt(curl_handle, CURLOPT_URL, seed->url);
         debug(1,"[%d]: poll seed %s\n",id,seed->url);
         
-        curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, eagle->hfp);
+        //curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, eagle->hfp);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA,   eagle->bfp);
 
         start_tick = eagle_ticks;
@@ -163,8 +166,8 @@ int watcher(int id)
                 perror("mmap failed");
             } else {
                 debug(1,"cache[%d]: size %d\n",id,len);
+                
                 parser(buf, len, seed);
-           
                 munmap(buf,len); 
             }
         } 
@@ -205,7 +208,7 @@ int main(int argc,char **argv)
 	int option_index = 0; 
 	int ret = 0;
 	int i;
-    char *seedname = NULL;
+    char *seedcfg = NULL;
 
 	while ( (c = getopt_long(argc,argv,"b:m:o:f:c:s:d:n:t:l:g:hv",long_options,&option_index)) 
 		> 0) {
@@ -237,7 +240,7 @@ int main(int argc,char **argv)
                     perror("No seeds specified");
                     exit(1);
                 }
-                seedname = optarg;
+                seedcfg = optarg;
                 break;
 			case 't':
 				break;
@@ -257,9 +260,12 @@ int main(int argc,char **argv)
 	}
 
     eagles_init();
+    
+    template_init();
+    
+    /* Must be behind of parser_init */
     seeds_init(0);
-    seeds_file_init(seedname);
-    parser_init();
+    seeds_cfg_init(seedcfg);
 	
     /* setup signal handler */
 	if (signal(SIGALRM,timer) == SIG_ERR) {

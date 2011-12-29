@@ -204,7 +204,7 @@ int main(int argc,char **argv)
 
     takos_init();
     seeds_init(65535);
-    seeds_file_init(seedname);
+    seeds_cfg_init(seedname);
 	
     /* setup signal handler */
 	if (signal(SIGALRM,time_handler) == SIG_ERR) {

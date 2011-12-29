@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "seed.h"
-#include "parser.h"
 #include "template.h"
 #include "debug.h"
 
@@ -187,7 +186,7 @@ char *get_sp_entry(char *start, SP_entry_t *entry)
     return tr_end+5;
 }
 
-void *SP_parser(const char *buf, int len, void *tp)
+void *SP_parser(const char *buf, int len, void *seed)
 {   
     char *tbody_start;
     char *tbody_end;
@@ -251,8 +250,8 @@ void dump_entry(TP_header_t *hdr)
     }
 }
 
-void *SP_filter(void *data, void *tp) {
-    template_t *temp = (template_t *)tp;
+void *SP_filter(void *data, void *s) {
+    seed_t *seed = s;
     TP_header_t *old;
     TP_header_t *new;
     SP_entry_t *np;
@@ -262,12 +261,12 @@ void *SP_filter(void *data, void *tp) {
     if (!data)
         return NULL;
         
-    if (!temp->private) {
-        temp->private = data;
+    if (!seed->private) {
+        seed->private = data;
         return NULL;
     }
 
-    old = (TP_header_t *)temp->private;
+    old = (TP_header_t *)seed->private;
     new = (TP_header_t *)data;
 
     np = (SP_entry_t *)new->data;
@@ -302,8 +301,8 @@ void *SP_filter(void *data, void *tp) {
         dump_entry(new);
     }
 
-    free(temp->private);
-    temp->private = data;
+    free(seed->private);
+    seed->private = data;
 
     return data;
 }

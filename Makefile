@@ -2,9 +2,9 @@ CC = gcc
 LD = ld
 AR = ar
 MAKE = make
-OBJECTS = tako.o eagle.o seed.o parser.o templates/build_in.o lib/build_in.o
+OBJECTS = tako.o eagle.o seed.o templates/build_in.o lib/build_in.o
 TAKO_OBJS = tako.o seed.o
-EAGLE_OBJS = eagle.o seed.o parser.o templates/build_in.o lib/build_in.o
+EAGLE_OBJS = eagle.o seed.o templates/build_in.o lib/build_in.o
 SUBDIRS = lib
 SUBDIRS += templates
 

@@ -14,7 +14,6 @@ typedef struct {
     parser_t   parser;
     filter_t   filter;
     notifier_t notifier;
-    void *private;
 } template_t;
 
 typedef struct TP_header {
@@ -24,6 +23,8 @@ typedef struct TP_header {
 
 extern struct list_head temp_list;
 
+
+extern void parser(const char *, int len, void *);
 extern void parser_init(void);
 extern int register_template(template_t *);
 extern void template_init(void);
