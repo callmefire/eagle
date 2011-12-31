@@ -9,6 +9,7 @@
 
 /* template entry */
 extern int SP_init(void);
+extern int SINAFX_init(void);
 
 /* Common structure */
 struct list_head temp_list;
@@ -56,20 +57,21 @@ void parse(const char *buf, int len, void *s)
 
 int register_template(template_t *temp)
 {
+    debug(8,"register template %s\n",temp->name);
     list_add_tail(&temp->list,&temp_list);
     return 0;
 }
 
 void tp_send_mail(char *body)
 {
-    char to[64] = "dchang@juniper.net,callmefire@139.com,callmefire@gmail.com";
+    char to[64] = "dchang@juniper.net,callmefire@139.com";
     char from[64] = "\"Eagle\"<eagle@callmefire.com>";
     char draftname[64];
     char domain[16] = "jnpr";
     char subject[32] = "SP News";
     mail_param_t mp;
 
-    sprintf(draftname,"%s/%ld",getenv("HOME"),random());
+    sprintf(draftname,"%s/Mail/%ld",getenv("HOME"),random() % 65536);
 
     memset(&mp,0,sizeof(mp));
 
@@ -95,4 +97,5 @@ void template_init(void)
    
     /* templates init */ 
     SP_init();
+    SINAFX_init();
 }

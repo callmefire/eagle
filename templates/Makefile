@@ -1,4 +1,4 @@
-MODULES += template.o SP.o
+MODULES += template.o SP.o SINAFX.o
 
 build_in.o: $(MODULES)
 	@$(AR) -r -o $@ $(MODULES) >/dev/null 2>&1
