@@ -34,6 +34,7 @@ static int get_entry_num(const char *buf, int len)
         cnt++;
         p = &p[pmatch.rm_eo];
     }
+    regfree(&preg);
 
     return cnt;
 }
@@ -135,6 +136,9 @@ static int get_entry_price(const char *buf, TP_header_t *hdr)
             break;
         
     } while ( regexec(&preg1,p,1,&pmatch, 0) != REG_NOMATCH);
+    
+    regfree(&preg1);
+    regfree(&preg2);
 
     return 0;
 }
@@ -153,7 +157,7 @@ static void *parser(const char *buf, int len, void *seed)
     end = (char *)buf + len;
 
     num = get_entry_num(buf,len);
-    debug(8,"get entry %d\n",num);
+    debug(8,"get entry %d, need size %d\n",num,sizeof(TP_header_t)+num*sizeof(entry_t));
 
     hdr = (TP_header_t *)malloc(sizeof(TP_header_t)+ num * sizeof(entry_t));
     if (!hdr) {
@@ -186,7 +190,7 @@ static void *filter(void *data, void *s)
     entry_t *np;
     entry_t *op;
     double nv,ov;
-    int i;
+    int i, has_new = 0;
     
     if (!data)
         return NULL;
@@ -212,12 +216,14 @@ static void *filter(void *data, void *s)
         if (!memcmp(np[i].name,"USDJPY",6)) {
            if ( ((nv - ov) > 0.2) || ((ov - nv) > 0.2)) {
                 np[i].flag |= TO_BE_REPORTED;
+                has_new = 1;
            } else {
                 np[i] = op[i];
            }
         } else {
            if ( ((nv - ov) > 0.002) || ((ov - nv) > 0.002)) {
                 np[i].flag |= TO_BE_REPORTED;
+                has_new = 1;
            } else {
                 np[i] = op[i];
            }
@@ -226,7 +232,10 @@ static void *filter(void *data, void *s)
 
     free(seed->private);
     seed->private = data;
-    
+   
+    if (!has_new)
+        data = NULL;
+
     return data;
 }
 
@@ -238,10 +247,10 @@ static void notifier(void *data)
     char *buf;
     char *p;
     
+    debug(8,"enter %s: data %p\n",__FUNCTION__,data);
+    
     if (!data)
         return;
-   
-    debug(8,"enter %s: data %p\n",__FUNCTION__,data);
 
     hdr = (TP_header_t *)data;
     ep = (entry_t *)hdr->data;
