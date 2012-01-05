@@ -46,7 +46,7 @@ static int get_entry_name(const char *buf, TP_header_t *hdr)
     char *regex = "[A-Z]\\{6,6\\}";
     char *p = (char *)buf;
     entry_t *ep = (entry_t *)hdr->data;
-    int i = 0;
+    int i = 0, len;
 
     if (regcomp(&preg,regex,0)) {
          perror("Regex compile error\n");
@@ -54,7 +54,9 @@ static int get_entry_name(const char *buf, TP_header_t *hdr)
     }
     
     while ( regexec(&preg,p,1,&pmatch, 0) != REG_NOMATCH) {
-        memcpy(&ep[i].name, &p[pmatch.rm_so], pmatch.rm_eo - pmatch.rm_so);
+        len = pmatch.rm_eo - pmatch.rm_so;
+        memcpy(&ep[i].name, &p[pmatch.rm_so],len);
+        ep[i].name[len] = 0;
 
         debug(8,"get name %s\n",ep[i].name);
         
@@ -77,7 +79,7 @@ static int get_entry_time(const char *buf, TP_header_t *hdr)
     char *regex = "\\([0-9]\\{2,2\\}:\\)\\{2,2\\}[0-9]\\{2,2\\}";
     char *p = (char *)buf;
     entry_t *ep = (entry_t *)hdr->data;
-    int i = 0;
+    int i = 0, len;
 
     if (regcomp(&preg,regex,0)) {
          perror("Regex compile error\n");
@@ -85,7 +87,9 @@ static int get_entry_time(const char *buf, TP_header_t *hdr)
     }
     
     while ( regexec(&preg,p,1,&pmatch, 0) != REG_NOMATCH) {
-        memcpy(&ep[i].time, &p[pmatch.rm_so], pmatch.rm_eo - pmatch.rm_so);
+        len = pmatch.rm_eo - pmatch.rm_so;
+        memcpy(&ep[i].time, &p[pmatch.rm_so], len);
+        ep[i].time[len] = 0;
 
         debug(8,"get time %s\n",ep[i].time);
         
@@ -109,7 +113,7 @@ static int get_entry_price(const char *buf, TP_header_t *hdr)
     char *regex2 = "[0-9]\\+\\?\\.[0-9]\\+\\?";
     char *p = (char *)buf;
     entry_t *ep = (entry_t *)hdr->data;
-    int i = 0;
+    int i = 0, len;
 
     if (regcomp(&preg1,regex1,0)) {
          perror("Regex compile error\n");
@@ -127,7 +131,9 @@ static int get_entry_price(const char *buf, TP_header_t *hdr)
         p = &p[pmatch.rm_eo];
 
         if (regexec(&preg2,p,1,&pmatch,0) != REG_NOMATCH) {
-            memcpy(&ep[i].price, &p[pmatch.rm_so], pmatch.rm_eo - pmatch.rm_so);
+            len = pmatch.rm_eo - pmatch.rm_so;
+            memcpy(&ep[i].price, &p[pmatch.rm_so],len);
+            ep[i].price[len] = 0;
         }
         debug(8,"get price %s\n",ep[i].price);
         
@@ -213,14 +219,14 @@ static void *filter(void *data, void *s)
         nv = atof(np[i].price);
         ov = atof(op[i].price);
         
-        if (!memcmp(np[i].name,"USDJPY",6)) {
+        if (i == 0) {
            if ( ((nv - ov) > 0.2) || ((ov - nv) > 0.2)) {
                 np[i].flag |= TO_BE_REPORTED;
                 has_new = 1;
            } else {
                 np[i] = op[i];
            }
-        } else {
+        } else if ((i == 3) || (i == 5) || (i == 7)) {
            if ( ((nv - ov) > 0.002) || ((ov - nv) > 0.002)) {
                 np[i].flag |= TO_BE_REPORTED;
                 has_new = 1;
