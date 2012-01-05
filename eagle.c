@@ -20,24 +20,11 @@ unsigned long start_tick = 0;
 /*
  * Usage:
  *
- * iotest 
+ * eagle 
  *
- * [ -s block_size]                  : IO block size
- * [ -m mode ]                       : IO mode
- * 					1 - seq,sync,non-direct
- * 					2 - seq,async,non-direct
- * 					3 - seq,sync,direct
- * 					4 - seq,async,direct
- * 					5 - ran,sync,non-direct
- * 					6 - ran,async,non-direct
- * 					7 - ran,sync,direct
- * 					8 - ran,async,direct
- * [ -o read/write ]                 : IO operation
- * [ -f file ]                       : target file or device
- * [ -c io_count]                    : io count
- * [ -n num ]                        : subsequent IO thread num
- * [ -t second ]                     : IO time, second
- * [ -l logfile]                     : log file
+ * [ -s config ]                     : seed config file
+ * [ -o dir ]                        : output folder
+ * [ -n num ]                        : thread num
  * [ -g debug_level                  : enable debug mode and set debug level, default is 0
  */
 
@@ -124,7 +111,7 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
     return (buf == MAP_FAILED)? NULL: buf;
 }
 
-int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,double ulnow)
+static int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,double ulnow)
 {
     if ( (eagle_ticks - start_tick) > 5) {
         debug(1,"downloading stopped at %f bytes. reset it\n",dlnow);
@@ -134,7 +121,7 @@ int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,d
     return 0;
 }
 
-int watcher(int id)
+static int watcher(int id)
 {
     CURL *curl_handle;
     seed_t *seed;
@@ -189,7 +176,7 @@ int watcher(int id)
 	return 0;
 }
 
-void eagles_init(void)
+static void eagles_init(void)
 {
     eagles = (eagle_t *)calloc(eagle_num,sizeof(eagle_t));
     if (!eagles) {
@@ -240,13 +227,13 @@ int main(int argc,char **argv)
 				break;
 			case 'n':
                 if ( (eagle_num = atoi(optarg)) == 0) {
-                    perror("Wrong eagle number");
+                    perror("Wrong thread number");
                     exit(1);
                 }
 				break;
             case 's':
                 if (!optarg) {
-                    perror("No seeds specified");
+                    perror("No seeds config specified");
                     exit(1);
                 }
                 seedcfg = optarg;
