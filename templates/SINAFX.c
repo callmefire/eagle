@@ -122,9 +122,9 @@ static int get_entry_price(const char *buf, TP_header_t *hdr)
     
     if (regcomp(&preg2,regex2,0)) {
          perror("Regex compile error\n");
+         regfree(&preg1);
          return 1;
     }
-    
     
     regexec(&preg1,p,1,&pmatch, 0);
     do {

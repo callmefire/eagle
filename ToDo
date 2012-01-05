@@ -1,2 +1,1 @@
-1. Add interval in seed config
-2. Move tp_send_mail to each module
+1. Move tp_send_mail to each module
