@@ -233,6 +233,8 @@ static void *filter(void *data, void *s)
            } else {
                 np[i] = op[i];
            }
+        } else {
+            np[i].flag = 0;
         }
     }
 
