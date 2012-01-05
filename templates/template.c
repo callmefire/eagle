@@ -28,7 +28,7 @@ template_t *get_template_by_name(const char *name)
             continue;
         
         if ( !memcmp(name,temp->name,len)) {
-            debug(1,"Find template %s\n",temp->name);
+            debug(8,"Find template %s\n",temp->name);
             return temp;
         }
    }

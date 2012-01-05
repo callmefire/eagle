@@ -58,7 +58,7 @@ static int get_entry_name(const char *buf, TP_header_t *hdr)
         memcpy(&ep[i].name, &p[pmatch.rm_so],len);
         ep[i].name[len] = 0;
 
-        debug(8,"get name %s\n",ep[i].name);
+        debug(6,"get name %s\n",ep[i].name);
         
         i++;
         if (i >= hdr->number)
@@ -91,7 +91,7 @@ static int get_entry_time(const char *buf, TP_header_t *hdr)
         memcpy(&ep[i].time, &p[pmatch.rm_so], len);
         ep[i].time[len] = 0;
 
-        debug(8,"get time %s\n",ep[i].time);
+        debug(6,"get time %s\n",ep[i].time);
         
         i++;
         if (i >= hdr->number)
@@ -135,7 +135,7 @@ static int get_entry_price(const char *buf, TP_header_t *hdr)
             memcpy(&ep[i].price, &p[pmatch.rm_so],len);
             ep[i].price[len] = 0;
         }
-        debug(8,"get price %s\n",ep[i].price);
+        debug(6,"get price %s\n",ep[i].price);
         
         i++;
         if (i >= hdr->number)
@@ -272,7 +272,7 @@ static void notifier(void *data)
     for (i=0; i<hdr->number; i++) {
         if (!(ep[i].flag & TO_BE_REPORTED)) 
             continue;
-        debug(0, "Find new data\n"); 
+        debug(6, "Find new data\n"); 
         num = sprintf(p,"[%d]: %s, %s, %s\n",i,ep[i].name,ep[i].time,ep[i].price);
         p += num;
         ep[i].flag &= ~TO_BE_REPORTED;

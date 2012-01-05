@@ -82,7 +82,7 @@ static int get_entry_num(char *start, char *end)
         ret++;
    }
    
-   debug(1,"enter %s: start %p, end %p, num %d\n",__FUNCTION__,start,end,ret-1);
+   debug(8,"enter %s: start %p, end %p, num %d\n",__FUNCTION__,start,end,ret-1);
    
    return (ret - 1);
 }
@@ -116,7 +116,7 @@ static void extract_data(const char *start, const char *end, char *data)
     
     data[i] = 0;
     
-    debug(1,"extract data: %s\n",data);
+    debug(6,"extract data: %s\n",data);
     
     return;
 }
@@ -334,7 +334,7 @@ static void notifier(void *data)
     for (i=0; i<hdr->number; i++) {
         if (!(ep[i].flag & SP_ENTRY_NEW)) 
             continue;
-        debug(0, "Find new data\n"); 
+        debug(6, "Find new data\n"); 
         num = sprintf(p,"[%d]: %s, %s, %s->%s, %s, %s\n",i,ep[i].entity,ep[i].date,ep[i].from,ep[i].to,ep[i].action,ep[i].type);
         p += num;
     }

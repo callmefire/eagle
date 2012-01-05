@@ -51,7 +51,7 @@ static void timer(int signo)
     seed_t *seed;
     seed_ring_q seed_ring_tmp;
 
-    debug(1,"timer start working\n");
+    debug(8,"timer start working\n");
     queue_init((seed_q_t *)&seed_ring_tmp);
     while ( (seed = seed_dequeue((seed_q_t *)&seed_ring)) ) {
         if (seed->time) {
@@ -159,7 +159,7 @@ int watcher(int id)
         /* Poll seed queue: FIFO */
         seed = seed_dequeue_sem((seed_q_t *)&seed_q, &seed_q.sem);
         curl_easy_setopt(curl_handle, CURLOPT_URL, seed->url);
-        debug(1,"[%d]: poll seed %s\n",id,seed->url);
+        debug(8,"[%d]: poll seed %s\n",id,seed->url);
         
         //curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, eagle->hfp);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA,   eagle->bfp);
@@ -173,7 +173,7 @@ int watcher(int id)
             if (!buf) {
                 perror("mmap failed");
             } else {
-                debug(1,"cache[%d]: size %d\n",id,len);
+                debug(8,"cache[%d]: size %d\n",id,len);
                 
                 parse(buf, len, seed);
                 munmap(buf,len); 
@@ -183,7 +183,7 @@ int watcher(int id)
         seed->time = seed->interval; 
         seed_enqueue((seed_q_t *)&seed_ring,seed);
         eagle_cache_fini(id);
-        debug(1,"[%d]: done\n",id);
+        debug(8,"[%d]: done\n",id);
     }
 
 	return 0;
