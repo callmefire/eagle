@@ -335,7 +335,7 @@ static void notifier(void *data)
         if (!(ep[i].flag & SP_ENTRY_NEW)) 
             continue;
         debug(6, "Find new data\n"); 
-        num = sprintf(p,"[%d]: %s, %s, %s->%s, %s, %s\n",i,ep[i].entity,ep[i].date,ep[i].from,ep[i].to,ep[i].action,ep[i].type);
+        num = sprintf(p,"[%d]: %s, %s, %s->%s\n",i,ep[i].entity,ep[i].date,ep[i].from,ep[i].to);
         p += num;
     }
 
