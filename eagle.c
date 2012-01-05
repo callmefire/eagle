@@ -14,7 +14,8 @@ unsigned long start_tick = 0;
 
 #define EAGLE_USER_AGENT  "Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/8.0"
 
-#define EAGLE_EYE_INVAL   10
+/* 1 second */
+#define EAGLE_EYE_INVAL   1 
 
 /*
  * Usage:
@@ -48,12 +49,19 @@ static void usage(int version)
 static void timer(int signo)
 {
     seed_t *seed;
+    seed_ring_q seed_ring_tmp;
 
     debug(1,"timer start working\n");
-
+    queue_init((seed_q_t *)&seed_ring_tmp);
     while ( (seed = seed_dequeue((seed_q_t *)&seed_ring)) ) {
-        seed_enqueue_sem((seed_q_t *)&seed_q,seed,&seed_q.sem);
+        if (seed->time) {
+            seed->time--;
+            seed_enqueue((seed_q_t *)&seed_ring_tmp,seed);    
+        } else {
+            seed_enqueue_sem((seed_q_t *)&seed_q,seed,&seed_q.sem);
+        }
     }
+    seed_queue_move((seed_q_t *)&seed_ring_tmp,(seed_q_t *)&seed_ring);
 
     eagle_ticks++;
 	alarm(EAGLE_EYE_INVAL);
@@ -171,7 +179,8 @@ int watcher(int id)
                 munmap(buf,len); 
             }
         } 
-        
+       
+        seed->time = seed->interval; 
         seed_enqueue((seed_q_t *)&seed_ring,seed);
         eagle_cache_fini(id);
         debug(1,"[%d]: done\n",id);

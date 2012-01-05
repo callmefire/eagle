@@ -45,6 +45,20 @@ seed_t *seed_match(const char *url)
     return NULL;
 }
 
+void seed_queue_move(seed_q_t *from, seed_q_t *to)
+{
+    pthread_mutex_lock(&from->q_mutex);
+    pthread_mutex_lock(&to->q_mutex);
+
+    ((to->head).next)->prev = from->head.prev;
+    ((from->head).prev)->next = (to->head).next;
+    (to->head).next = from->head.next;
+    ((from->head).next)->prev = &to->head;
+
+    pthread_mutex_unlock(&to->q_mutex);
+    pthread_mutex_unlock(&from->q_mutex);
+}
+
 void seed_enqueue(seed_q_t *queue, seed_t *seed)
 {
     pthread_mutex_lock(&queue->q_mutex);
@@ -67,6 +81,18 @@ seed_t *seed_dequeue(seed_q_t *queue)
 
     return s;
 }
+
+seed_t *seed_try_dequeue(seed_q_t *queue)
+{
+    seed_t *s;
+    
+    pthread_mutex_lock(&queue->q_mutex);
+    s = list_empty(&queue->head)?NULL:get_entry(seed_t,list,queue->head.next); 
+    pthread_mutex_unlock(&queue->q_mutex);
+
+    return s;
+}
+
 
 void seed_enqueue_sem(seed_q_t *queue, seed_t *seed, sem_t *sem)
 {
@@ -123,7 +149,7 @@ void seed_free(seed_t *seed)
 
 #define STM_GET_SEED     0x1
 #define STM_GET_URL      0x2
-#define STM_GET_FILTER   0x3
+#define STM_GET_INTERVAL 0x3
 #define STM_GET_TEMPLATE 0x4
 
 struct seed_stack_node {
@@ -131,8 +157,9 @@ struct seed_stack_node {
     int pos;
 };
 
+#define SEED_STACK_DEPTH    32
 struct seed_stack {
-    struct seed_stack_node stack[8];
+    struct seed_stack_node stack[SEED_STACK_DEPTH];
     int top;
 };
 
@@ -156,7 +183,7 @@ static void seed_stack_init(struct seed_stack *stack) {
 }
 
 #if 0
-static int get_cur_state(struct seed_stack *stack) {
+static int get_top_state(struct seed_stack *stack) {
     return stack->stack[stack->top].state;
 }
 
@@ -215,6 +242,9 @@ static void seed_parse(const char *buf, unsigned int len)
             } else if (!memcmp(p,"template",key_len)) {
                 seed_node_push(&stack,STM_GET_TEMPLATE,pmatch.rm_eo + diff);
                 debug(8,"push <template>\n");
+            } else if (!memcmp(p,"interval",key_len)) {
+                seed_node_push(&stack,STM_GET_INTERVAL,pmatch.rm_eo + diff);
+                debug(8,"push <interval>\n");
             } else {
                 ; 
             }
@@ -249,6 +279,21 @@ static void seed_parse(const char *buf, unsigned int len)
                     exit(1);
                 }
                 memcpy(seed->template,&start[node->pos],len - 1);
+            } else if (!memcmp(p,"interval",key_len)) {
+                int len;
+                char * tmp_buf;
+                node = seed_node_pop(&stack);
+                debug(8,"pop <interval>\n");
+                len = pmatch.rm_so + diff - node->pos + 1;
+                tmp_buf = (char *)calloc(1,len);
+                if (!tmp_buf) {
+                    debug(1,"interval alloc failed: %d\n",len);
+                    exit(1);
+                }
+                memcpy(tmp_buf,&start[node->pos],len - 1);
+                tmp_buf[len] = 0;
+                seed->interval = atoi(tmp_buf);
+                free(tmp_buf); 
             } else {
                 ;
             }
@@ -259,7 +304,7 @@ static void seed_parse(const char *buf, unsigned int len)
     regfree(&preg);
 }
 
-static void queue_init(seed_q_t *q)
+void queue_init(seed_q_t *q)
 {
     INIT_LIST_HEAD(&q->head);
 	pthread_mutex_init(&q->q_mutex,NULL);
