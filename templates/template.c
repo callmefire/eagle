@@ -50,7 +50,7 @@ void parse(const char *buf, int len, void *s)
 
     temp = seed->temp;
 
-    temp->notifier(temp->filter(temp->parser(buf,len,seed),seed));
+    temp->notifier(temp->filter(temp->parser(buf,len,seed),seed),seed);
 
     return;
 }
@@ -62,13 +62,10 @@ int register_template(template_t *temp)
     return 0;
 }
 
-void tp_send_mail(char *body)
+void tp_send_mail(char *to, char *domain, char *subject, char *body)
 {
-    char to[64] = "dchang@juniper.net,callmefire@139.com";
     char from[64] = "\"Eagle\"<eagle@callmefire.com>";
     char draftname[64];
-    char domain[16] = "jnpr";
-    char subject[32] = "SP News";
     mail_param_t mp;
 
     sprintf(draftname,"%s/Mail/%ld",getenv("HOME"),random() % 65536);

@@ -8,10 +8,11 @@
 typedef struct seed {
     struct list_head list;
     char *url;
+    char *mail;
+    char *template;
     int flags;
     int interval;
     int time;
-    char *template;
     template_t *temp;
     void *private;
 } seed_t;

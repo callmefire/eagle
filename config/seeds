@@ -3,9 +3,11 @@
 </url>
 <template>SP</template>
 <interval>10</interval>
+<mail>dchang@juniper.net,callmefire@139.com</mail>
 </seed>
 <seed>
 <url>http://hq.sinajs.cn/list=USDJPY,USDCHF,GBPUSD,EURUSD,USDHKD,AUDUSD,USDCAD,USDCNY</url>
 <template>SINAFX</template>
 <interval>10</interval>
+<mail>dchang@juniper.net,callmefire@139.com</mail>
 </seed>

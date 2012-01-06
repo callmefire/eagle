@@ -307,8 +307,9 @@ static void *filter(void *data, void *s) {
     return data;
 }
 
-static void notifier(void *data)
+static void notifier(void *data, void *s)
 {
+    seed_t *seed = (seed_t *)s;
     TP_header_t *hdr;
     SP_entry_t *ep;
     int i, num = 0;
@@ -341,8 +342,8 @@ static void notifier(void *data)
 
     *p = 0;
 
-    if (p != buf)
-        tp_send_mail(buf); 
+    if (p != buf && seed->mail)
+        tp_send_mail(seed->mail, "jnpr", "SP News", buf); 
    
     free(buf);
     return;

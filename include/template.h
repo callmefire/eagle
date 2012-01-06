@@ -6,7 +6,7 @@
 
 typedef void * (*parser_t)(const char *, int, void *);
 typedef void * (*filter_t)(void *, void *);
-typedef void   (*notifier_t)(void *);
+typedef void   (*notifier_t)(void *, void *);
 
 typedef struct {
     struct list_head list;
@@ -29,6 +29,6 @@ extern void parser_init(void);
 extern int register_template(template_t *);
 extern void template_init(void);
 
-extern void tp_send_mail(char *body);
+extern void tp_send_mail(char *, char *, char *, char *);
 
 #endif

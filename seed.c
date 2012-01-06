@@ -144,6 +144,9 @@ void seed_free(seed_t *seed)
     if (seed->private)
         free(seed->private);
 
+    if (seed->mail)
+        free(seed->mail);
+
     free(seed);
 }
 
@@ -151,6 +154,7 @@ void seed_free(seed_t *seed)
 #define STM_GET_URL      0x2
 #define STM_GET_INTERVAL 0x3
 #define STM_GET_TEMPLATE 0x4
+#define STM_GET_MAIL     0x5
 
 struct seed_stack_node {
     int state;
@@ -245,6 +249,9 @@ static void seed_parse(const char *buf, unsigned int len)
             } else if (!memcmp(p,"interval",key_len)) {
                 seed_node_push(&stack,STM_GET_INTERVAL,pmatch.rm_eo + diff);
                 debug(8,"push <interval>\n");
+            } else if (!memcmp(p,"mail",key_len)) {
+                seed_node_push(&stack,STM_GET_MAIL,pmatch.rm_eo + diff);
+                debug(8,"push <mail>\n");
             } else {
                 ; 
             }
@@ -294,6 +301,17 @@ static void seed_parse(const char *buf, unsigned int len)
                 tmp_buf[len] = 0;
                 seed->interval = atoi(tmp_buf);
                 free(tmp_buf); 
+            } else if (!memcmp(p,"mail",key_len)) {
+                int len;
+                node = seed_node_pop(&stack);
+                debug(8,"pop <mail>\n");
+                len = pmatch.rm_so + diff - node->pos + 1;
+                seed->mail = calloc(1,len);
+                if (!seed->mail) {
+                    debug(1,"Mail alloc failed: %d\n",len);
+                    exit(1);
+                }
+                memcpy(seed->mail,&start[node->pos],len - 1);
             } else {
                 ;
             }
