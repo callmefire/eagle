@@ -221,8 +221,7 @@ static void *filter(void *data, void *s)
         
         if (i == 0) {
            if ( ((nv - ov) > 0.2) || ((ov - nv) > 0.2)) {
-                np[i].flag |= TO_BE_REPORTED;
-                has_new = 1;
+                np[i].flag = 0;
            } else {
                 np[i] = op[i];
            }

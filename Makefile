@@ -3,7 +3,7 @@ LD = ld
 AR = ar
 MAKE = make
 OBJECTS = tako.o eagle.o seed.o templates/build_in.o lib/build_in.o
-TAKO_OBJS = tako.o seed.o
+TAKO_OBJS = tako.o seed.o templates/build_in.o lib/build_in.o
 EAGLE_OBJS = eagle.o seed.o templates/build_in.o lib/build_in.o
 SUBDIRS = lib
 SUBDIRS += templates
@@ -27,7 +27,7 @@ export CFLAGS
 
 all: tako eagle
 
-tako: $(TAKO_OBJS)
+tako: build $(TAKO_OBJS)
 	@$(CC) $(CFLAGS) -o tako $(TAKO_OBJS) -lcurl -lpthread -lrt
 	@echo "CC $@" 
 eagle: build $(EAGLE_OBJS)	

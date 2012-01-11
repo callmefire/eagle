@@ -138,9 +138,6 @@ void seed_free(seed_t *seed)
     if (seed->url)
         free(seed->url);
     
-    if (seed->template)
-        free(seed->template);
-
     if (seed->private)
         free(seed->private);
 
@@ -257,7 +254,7 @@ static void seed_parse(const char *buf, unsigned int len)
             }
         } else {
             p++;
-            key_len--;
+            key_len--; /* Don't count '/' */
             
             if (!memcmp(p,"seed",key_len)) {
                 node = seed_node_pop(&stack);
@@ -277,15 +274,22 @@ static void seed_parse(const char *buf, unsigned int len)
                 memcpy(seed->url,&start[node->pos],len - 1);
             } else if (!memcmp(p,"template",key_len)) {
                 int len;
+                char *name;
                 node = seed_node_pop(&stack);
                 debug(8,"pop <template>\n");
                 len = pmatch.rm_so + diff - node->pos + 1;
-                seed->template = calloc(1,len);
-                if (!seed->template) {
+                name = calloc(1,len);
+                if (!name) {
                     debug(1,"template alloc failed: %d\n",len);
                     exit(1);
                 }
-                memcpy(seed->template,&start[node->pos],len - 1);
+                memcpy(name,&start[node->pos],len - 1);
+                seed->temp = get_template_by_name(name);
+                if (!seed->temp) {
+                    printf("Can't find template %s\n",name);
+                    exit(1);
+                }
+                free(name);
             } else if (!memcmp(p,"interval",key_len)) {
                 int len;
                 char * tmp_buf;

@@ -42,10 +42,8 @@ void parse(const char *buf, int len, void *s)
     seed_t *seed = (seed_t *)s;
     
     if (!seed->temp) {
-        if ( !(seed->temp = get_template_by_name(seed->template))) {
-            printf("Cannot find template %s\n",seed->template);
-            return;
-        }
+        perror("Didn't find template\n");
+        return;
     }
 
     temp = seed->temp;

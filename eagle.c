@@ -113,8 +113,8 @@ static char *eagle_cache_map(eagle_t *eagle, int *len)
 
 static int progress_callback(void *clientp,double dltotal,double dlnow,double ultotal,double ulnow)
 {
-    if ( (eagle_ticks - start_tick) > 5) {
-        debug(1,"downloading stopped at %f bytes. reset it\n",dlnow);
+    if ( (eagle_ticks - start_tick) > 30) {
+        debug(1,"downloading stopped at %f bytes. reset it, (%ld,%ld)\n",dlnow,eagle_ticks,start_tick);
         return 1;
     }
 

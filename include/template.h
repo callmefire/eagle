@@ -30,5 +30,5 @@ extern int register_template(template_t *);
 extern void template_init(void);
 
 extern void tp_send_mail(char *, char *, char *, char *);
-
+extern template_t *get_template_by_name(const char *name);
 #endif
