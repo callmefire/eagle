@@ -47,9 +47,9 @@ int send_mail(mail_param_t *mp)
 
 #if 0
 int main(int argc,char **argv) {
-	char from[64]="\"Eddy Tao\"<eddytao@juniper.net>";
-    char to[64]="\"Daniel Chang\"<dchang@juniper.net>";
-	char domain[32]="jnpr";
+	char from[64]="\"A\"<A@test.net>";
+    char to[64]="\"B\"<B@test.net>";
+	char domain[32]="test";
 	char subject[64]="title";
     char body[64]="test body";
     char draftname[64];
